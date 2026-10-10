@@ -3,11 +3,13 @@ import datetime
 import os
 from typing import Optional
 import subprocess
-
+import re
+import time
 
 PROJECT_ROOT = Path(__file__).parent
 CAPTURE_DIR = PROJECT_ROOT / "capture"
 TARGET_DOMAIN = "yuancon.app"
+PRIMARY_URL = "https://yuancon.app/"
 
 
 def create_project_dir(
@@ -44,15 +46,57 @@ f"""wget \
     print(proc.stdout)
 
 
-def inital_download(export_dir: str) -> None:
+def inital_download(
+    export_dir: str
+) -> None:
     wget(
-        target_url="https://yuancon.app/",
+        target_url=PRIMARY_URL,
         export_dir=export_dir
     )
 
 
-def recurssive_assets() -> None:
-    pass
+def find_all_assets(
+    export_dir: str
+) -> list[str]:
+    """
+    Here we search through website source files to find any assets that are mentioned.
+
+    When looking at the source files I noticed that missing files are mentioned in source files. So we find them with regex.
+    """
+
+    file_list: list[Path] = []
+    for root, dirs, files in os.walk(export_dir):
+        for file in files:
+            if file.endswith(".js") or file.endswith('.css') or file.endswith('.html'):
+                file_list.append(Path(root) / file)
+
+    print(file_list)
+
+
+    possible_files: list[str] = []
+    # searches for any .css .js or .html file with one or more character name.
+    # "" '' or `` enclosed strings with out "'`,;&
+    pattern = re.compile("[\"\`\'][^,\"\'\`&;]+(\.css|\.js|.html)[\"\`\']")
+    for file_path in file_list:
+        print(f"Scaning '{file_path}' for other missed files")
+        for i, line in enumerate(open(file_path)):
+            for match in re.finditer(pattern, line):
+                print('Found on line %s: %s' % (i+1, match.group()))
+                possible_files.append(match.group())
+
+    print(possible_files)
+
+    results: str = []
+    # clean the captures
+    for x in possible_files:
+        x = x.replace('"', "")
+        x = x.replace("'", "")
+        x = x.replace("`", "")
+        if x not in ["Node.js"]:
+            results.append(x)
+
+    print(results)
+    return results
 
 
 def main() -> int:
@@ -61,7 +105,11 @@ def main() -> int:
     inital_download(
         export_dir=export_dir
     )
-    recurssive_assets()
+    # # seems like takes a second for files to show up
+    # time.sleep(1)
+    assets_list = find_all_assets(
+        export_dir=export_dir
+    )
 
 if __name__ == "__main__":
     main()
