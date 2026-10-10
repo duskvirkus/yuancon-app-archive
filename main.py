@@ -42,7 +42,6 @@ f"""wget \
 """)
     print(f"Running {wget_command}")
     proc = subprocess.run(wget_command, shell=True, capture_output=True)
-    print(proc.stdout)
 
 
 def inital_download(
@@ -92,14 +91,47 @@ def find_all_assets(
     return results
 
 
+def download_if_not_local(
+    export_dir: str,
+    to_download: str,
+) -> bool:
+    local_dir = export_dir / "yuancon.app"
+    if not os.path.isfile(local_dir / to_download):
+        print(f"'{to_download}' is not at '{local_dir / to_download}' attempting download.")
+        wget(
+            target_url=PRIMARY_URL + to_download,
+            export_dir=export_dir
+        )
+        return True
+    return False
+    
+
+
+def download_missing(
+    export_dir: str
+) -> None:
+    download_list = find_all_assets(
+        export_dir=export_dir
+    )
+
+    was_something_downloaded = False
+    for to_download in download_list:
+        downloaded = download_if_not_local(
+            export_dir=export_dir,
+            to_download=to_download,
+        )
+        was_something_downloaded = was_something_downloaded or downloaded
+
+    print(f"was something downloaded '{was_something_downloaded}'")
+
 def main() -> int:
 
     export_dir = create_project_dir()
     inital_download(
         export_dir=export_dir
     )
-    assets_list = find_all_assets(
-        export_dir=export_dir
+    download_missing(
+        export_dir=export_dir,
     )
 
 if __name__ == "__main__":

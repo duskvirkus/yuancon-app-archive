@@ -14,7 +14,7 @@ Currently just the script to do it yourself however if the site ever goes down I
 ## Usage
 
 ```shell
-./run.sh
+uv run main.py
 ```
 
 You can serve the site by
