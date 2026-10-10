@@ -41,7 +41,7 @@ f"""wget \
     --no-parent \
     {target_url}
 """)
-    print(f"Running {wget_command}")
+    # print(f"Running {wget_command}")
     proc = subprocess.run(wget_command, shell=True, capture_output=True)
 
 
@@ -52,6 +52,7 @@ def inital_download(
         target_url=PRIMARY_URL,
         export_dir=export_dir
     )
+    print("Downloaded inital capture.")
 
 
 def find_all_assets(
@@ -74,10 +75,10 @@ def find_all_assets(
     # "" '' or `` enclosed strings with out "'`,;&
     pattern = re.compile("[\"\`\'][^,\"\'\`&;]+(\.css|\.js|.html)[\"\`\']")
     for file_path in file_list:
-        print(f"Scaning '{file_path}' for other missed files")
+        # print(f"Scaning '{file_path}' for other missed files")
         for i, line in enumerate(open(file_path)):
             for match in re.finditer(pattern, line):
-                print('Found on line %s: %s' % (i+1, match.group()))
+                # print('Found on line %s: %s' % (i+1, match.group()))
                 possible_files.append(match.group())
 
     results: str = []
@@ -107,7 +108,7 @@ def download_if_not_local(
 ) -> bool:
     local_dir = export_dir / "yuancon.app"
     if not os.path.isfile(local_dir / to_download):
-        print(f"'{to_download}' is not at '{local_dir / to_download}' attempting download.")
+        # print(f"'{to_download}' is not at '{local_dir / to_download}' attempting download.")
         finished = wget(
             target_url=PRIMARY_URL + to_download,
             export_dir=export_dir
@@ -124,7 +125,6 @@ def get_file_count(
         for file in files:
             count += 1
     return count
-    
 
 
 def download_missing(
@@ -145,13 +145,14 @@ def download_missing(
         )
 
     after_file_count: int = get_file_count(target_dir=export_dir)
-    print(f"file count before '{before_file_count}' after '{after_file_count}'")
+    print(f"download_missing() file count before '{before_file_count}' after '{after_file_count}'")
     return before_file_count != after_file_count
 
 def download_missing_recursive(
     export_dir: str,
     keep_running: bool = True,
 ) -> None:
+    print("Recursivly checking for missing files. Will continue trying until can't find anything else to download.")
     if not keep_running:
         return
 
@@ -162,6 +163,7 @@ def download_missing_recursive(
         export_dir=export_dir,
         keep_running=was_something_downloaded,
     )
+
 
 def main() -> int:
 
