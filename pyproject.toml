@@ -1,0 +1,7 @@
+[project]
+name = "yuancon-app-archive"
+version = "0.1.0"
+description = "Script for achiving yuancon.app for personal use."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
