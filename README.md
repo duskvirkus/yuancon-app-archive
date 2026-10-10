@@ -6,6 +6,11 @@ This project is meant to archive https://yuancon.app/ to perserve the app so con
 
 Currently just the script to do it yourself however if the site ever goes down I may publish my own captures.
 
+## Requirements
+
+- wget
+- python + uv
+
 ## Usage
 
 ```shell
