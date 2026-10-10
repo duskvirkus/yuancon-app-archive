@@ -4,7 +4,6 @@ import os
 from typing import Optional
 import subprocess
 import re
-import time
 
 PROJECT_ROOT = Path(__file__).parent
 CAPTURE_DIR = PROJECT_ROOT / "capture"
@@ -70,9 +69,6 @@ def find_all_assets(
             if file.endswith(".js") or file.endswith('.css') or file.endswith('.html'):
                 file_list.append(Path(root) / file)
 
-    print(file_list)
-
-
     possible_files: list[str] = []
     # searches for any .css .js or .html file with one or more character name.
     # "" '' or `` enclosed strings with out "'`,;&
@@ -84,8 +80,6 @@ def find_all_assets(
                 print('Found on line %s: %s' % (i+1, match.group()))
                 possible_files.append(match.group())
 
-    print(possible_files)
-
     results: str = []
     # clean the captures
     for x in possible_files:
@@ -95,7 +89,6 @@ def find_all_assets(
         if x not in ["Node.js"]:
             results.append(x)
 
-    print(results)
     return results
 
 
@@ -105,8 +98,6 @@ def main() -> int:
     inital_download(
         export_dir=export_dir
     )
-    # # seems like takes a second for files to show up
-    # time.sleep(1)
     assets_list = find_all_assets(
         export_dir=export_dir
     )
