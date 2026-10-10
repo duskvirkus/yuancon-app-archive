@@ -26,7 +26,7 @@ def wget(
     target_url: str,
     export_dir: str,
     target_domain: str = TARGET_DOMAIN
-) -> None:
+) -> bool:
     wget_command = (
 f"""wget \
     --recursive \
@@ -34,6 +34,7 @@ f"""wget \
     --adjust-extension \
     --span-hosts \
     --convert-links \
+    --no-clobber \
     --restrict-file-names=windows \
     --directory-prefix {export_dir} \
     --domains {TARGET_DOMAIN} \
@@ -85,8 +86,17 @@ def find_all_assets(
         x = x.replace('"', "")
         x = x.replace("'", "")
         x = x.replace("`", "")
-        if x not in ["Node.js"]:
+
+        if x.startswith("./"):
+            x = x.replace("./", "")
+
+        if x.startswith(PRIMARY_URL):
+            x = x.replace(PRIMARY_URL, "")
+
+        if x not in ["Node.js"] and (not x.startswith("http")):
             results.append(x)
+        else:
+            print(f"WARNING: Skipping {x}")
 
     return results
 
@@ -98,31 +108,60 @@ def download_if_not_local(
     local_dir = export_dir / "yuancon.app"
     if not os.path.isfile(local_dir / to_download):
         print(f"'{to_download}' is not at '{local_dir / to_download}' attempting download.")
-        wget(
+        finished = wget(
             target_url=PRIMARY_URL + to_download,
             export_dir=export_dir
         )
-        return True
+        return finished
     return False
+
+
+def get_file_count(
+    target_dir: str
+) -> int:
+    count = 0
+    for root, dirs, files in os.walk(target_dir):
+        for file in files:
+            count += 1
+    return count
     
 
 
 def download_missing(
     export_dir: str
-) -> None:
+) -> bool:
     download_list = find_all_assets(
         export_dir=export_dir
     )
 
-    was_something_downloaded = False
+    # I know it's crude but we just gonna check the file count 
+    # to see if anything was downloaded cause capturing output is annoying
+    before_file_count: int = get_file_count(target_dir=export_dir)
+
     for to_download in download_list:
         downloaded = download_if_not_local(
             export_dir=export_dir,
             to_download=to_download,
         )
-        was_something_downloaded = was_something_downloaded or downloaded
 
-    print(f"was something downloaded '{was_something_downloaded}'")
+    after_file_count: int = get_file_count(target_dir=export_dir)
+    print(f"file count before '{before_file_count}' after '{after_file_count}'")
+    return before_file_count != after_file_count
+
+def download_missing_recursive(
+    export_dir: str,
+    keep_running: bool = True,
+) -> None:
+    if not keep_running:
+        return
+
+    was_something_downloaded = download_missing(
+        export_dir=export_dir,
+    )
+    download_missing_recursive(
+        export_dir=export_dir,
+        keep_running=was_something_downloaded,
+    )
 
 def main() -> int:
 
@@ -130,7 +169,7 @@ def main() -> int:
     inital_download(
         export_dir=export_dir
     )
-    download_missing(
+    download_missing_recursive(
         export_dir=export_dir,
     )
 
